@@ -118,7 +118,6 @@
             bottom: calc(33% - 4px);
             width: clamp(118px, 23vw, 235px);
             transform-origin: 50% 100%;
-            filter: drop-shadow(6px 7px 0 #20261d44);
             will-change: transform;
         }
 
@@ -137,7 +136,7 @@
             border: 0;
             background: transparent;
             box-shadow: none;
-            font-size: 36px;
+            font-size: 40px;
             line-height: 1;
             will-change: transform;
         }
@@ -252,21 +251,21 @@
     const status = document.querySelector('#status');
 
     const obstacleTypes = [
-        { icon: '🐍', label: 'Змея', width: 54, height: 48 },
-        { icon: '💩', label: 'Какашка', width: 50, height: 58 },
-        { icon: '🔥', label: 'Огонь', width: 48, height: 64 },
-        { icon: '🌵', label: 'Кактус', width: 48, height: 68 },
-        { icon: '🪨', label: 'Камень', width: 58, height: 50 },
-        { icon: '🐌', label: 'Улитка', width: 58, height: 48 },
-        { icon: '🕷️', label: 'Паук', width: 52, height: 50 },
-        { icon: '🦂', label: 'Скорпион', width: 58, height: 52 },
-        { icon: '🍄', label: 'Гриб', width: 50, height: 60 },
-        { icon: '🦀', label: 'Краб', width: 58, height: 50 },
-        { icon: '🧨', label: 'Динамит', width: 48, height: 62 },
-        { icon: '🧱', label: 'Кирпич', width: 58, height: 48 },
-        { icon: '🪵', label: 'Бревно', width: 62, height: 46 },
-        { icon: '🦔', label: 'Ёж', width: 56, height: 52 },
-        { icon: '⚡', label: 'Молния', width: 46, height: 64 },
+        { icon: '🐍', label: 'Змея', width: 60, height: 53 },
+        { icon: '💩', label: 'Какашка', width: 55, height: 64 },
+        { icon: '🔥', label: 'Огонь', width: 53, height: 70 },
+        { icon: '🌵', label: 'Кактус', width: 53, height: 75 },
+        { icon: '🪨', label: 'Камень', width: 64, height: 55 },
+        { icon: '🐌', label: 'Улитка', width: 64, height: 53 },
+        { icon: '🕷️', label: 'Паук', width: 57, height: 55 },
+        { icon: '🦂', label: 'Скорпион', width: 64, height: 57 },
+        { icon: '🍄', label: 'Гриб', width: 55, height: 66 },
+        { icon: '🦀', label: 'Краб', width: 64, height: 55 },
+        { icon: '🧨', label: 'Динамит', width: 53, height: 68 },
+        { icon: '🧱', label: 'Кирпич', width: 64, height: 53 },
+        { icon: '🪵', label: 'Бревно', width: 68, height: 51 },
+        { icon: '🦔', label: 'Ёж', width: 62, height: 57 },
+        { icon: '⚡', label: 'Молния', width: 51, height: 70 },
     ];
 
     const state = {
