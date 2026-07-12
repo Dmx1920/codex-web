@@ -274,7 +274,7 @@
     bestNode.textContent = state.best;
 
     const resetObstacle = () => {
-        state.obstacleX = game.clientWidth + 80 + Math.random() * 260;
+        state.obstacleX = game.clientWidth + 20 + Math.random() * 100;
     };
 
     const jump = () => {
@@ -319,7 +319,7 @@
     const collides = () => {
         const a = creature.getBoundingClientRect();
         const b = obstacle.getBoundingClientRect();
-        const paddingX = a.width * .25;
+        const paddingX = a.width * .33;
         const paddingY = a.height * .22;
 
         return a.right - paddingX > b.left &&
@@ -347,7 +347,7 @@
 
         state.score += dt;
         scoreNode.textContent = Math.floor(state.score);
-        creature.style.transform = `translateY(${-state.y}px)`;
+        creature.style.transform = `translateY(${-state.y}px) scaleX(-1)`;
         obstacle.style.transform = `translateX(${state.obstacleX}px)`;
 
         if (collides()) {

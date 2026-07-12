@@ -26,6 +26,9 @@ class ExampleTest extends TestCase
             ->assertOk()
             ->assertSee('if (event.repeat) return;', escape: false)
             ->assertSee('jumpVelocity: 820', escape: false)
-            ->assertSee('@keyframes bob { to { translate: 0 -5px;', escape: false);
+            ->assertSee('@keyframes bob { to { translate: 0 -5px;', escape: false)
+            ->assertSee('scaleX(-1)', escape: false)
+            ->assertSee('const paddingX = a.width * .33;', escape: false)
+            ->assertSee('game.clientWidth + 20 + Math.random() * 100', escape: false);
     }
 }
