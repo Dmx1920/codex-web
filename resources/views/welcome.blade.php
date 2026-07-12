@@ -197,7 +197,7 @@
         .status { color: #53604e; }
         kbd { padding: 3px 8px; border: 2px solid var(--ink); border-radius: 8px; background: #fff; box-shadow: 2px 2px 0 var(--ink); }
 
-        @keyframes bob { to { transform: translateY(-5px) rotate(-1deg); } }
+        @keyframes bob { to { translate: 0 -5px; rotate: -1deg; } }
         @keyframes wobble { 25% { rotate: -5deg; } 75% { rotate: 5deg; } }
 
         @media (max-width: 680px) {
@@ -264,7 +264,9 @@
         obstacleX: 0,
         score: 0,
         lastTime: 0,
-        speed: 330,
+        speed: 280,
+        jumpVelocity: 820,
+        gravity: 1800,
         best: Number(localStorage.getItem('vesely-sush-best') || 0),
         frame: 0,
     };
@@ -277,8 +279,8 @@
 
     const jump = () => {
         if (!state.running) return;
-        if (state.y < 5) {
-            state.velocity = 720;
+        if (state.y <= 1 && state.velocity === 0) {
+            state.velocity = state.jumpVelocity;
             status.textContent = 'Прыг!';
         }
     };
@@ -288,7 +290,7 @@
         state.y = 0;
         state.velocity = 0;
         state.score = 0;
-        state.speed = 330;
+        state.speed = 280;
         state.lastTime = performance.now();
         scoreNode.textContent = '0';
         panel.hidden = true;
@@ -317,8 +319,8 @@
     const collides = () => {
         const a = creature.getBoundingClientRect();
         const b = obstacle.getBoundingClientRect();
-        const paddingX = a.width * .17;
-        const paddingY = a.height * .15;
+        const paddingX = a.width * .25;
+        const paddingY = a.height * .22;
 
         return a.right - paddingX > b.left &&
             a.left + paddingX < b.right &&
@@ -329,9 +331,9 @@
     function tick(now) {
         if (!state.running) return;
 
-        const dt = Math.min((now - state.lastTime) / 1000, .035);
+        const dt = Math.min((now - state.lastTime) / 1000, .08);
         state.lastTime = now;
-        state.velocity -= 1900 * dt;
+        state.velocity -= state.gravity * dt;
         state.y = Math.max(0, state.y + state.velocity * dt);
 
         if (state.y === 0 && state.velocity < 0) state.velocity = 0;
@@ -339,7 +341,7 @@
         state.obstacleX -= state.speed * dt;
         if (state.obstacleX < -100) {
             state.score += 10;
-            state.speed = Math.min(560, state.speed + 12);
+            state.speed = Math.min(480, state.speed + 10);
             resetObstacle();
         }
 
@@ -364,7 +366,13 @@
     window.addEventListener('keydown', event => {
         if (event.code !== 'Space') return;
         event.preventDefault();
-        state.running ? jump() : start();
+        if (event.repeat) return;
+        if (state.running) {
+            jump();
+        } else {
+            start();
+            jump();
+        }
     });
     window.addEventListener('resize', () => {
         if (!state.running) resetObstacle();
