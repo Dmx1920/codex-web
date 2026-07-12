@@ -130,22 +130,17 @@
             z-index: 3;
             bottom: 33%;
             left: 0;
+            display: grid;
+            place-items: center;
             width: 46px;
             height: 66px;
             border: 4px solid var(--ink);
-            border-radius: 50% 50% 15px 15px;
+            border-radius: 16px;
             background: var(--pink);
             box-shadow: inset -8px -9px 0 #d96891;
+            font-size: 36px;
+            line-height: 1;
             will-change: transform;
-        }
-
-        .obstacle::after {
-            position: absolute;
-            top: -20px;
-            left: 10px;
-            content: "!";
-            font-size: 34px;
-            font-weight: 900;
         }
 
         .panel {
@@ -229,7 +224,7 @@
         <div class="cloud" aria-hidden="true"></div>
         <div class="ground" aria-hidden="true"></div>
         <img class="creature" id="creature" src="{{ asset('assets/sush.gif') }}" alt="Весёлый сущ">
-        <div class="obstacle" id="obstacle" aria-hidden="true"></div>
+        <div class="obstacle" id="obstacle" role="img" aria-label="Препятствие"></div>
 
         <div class="panel" id="panel">
             <h2 id="panel-title">Пора веселиться!</h2>
@@ -257,6 +252,24 @@
     const startButton = document.querySelector('#start');
     const status = document.querySelector('#status');
 
+    const obstacleTypes = [
+        { icon: '🐍', label: 'Змея', width: 54, height: 48, color: '#b9e769' },
+        { icon: '💩', label: 'Какашка', width: 50, height: 58, color: '#d7a86e' },
+        { icon: '🔥', label: 'Огонь', width: 48, height: 64, color: '#ffae57' },
+        { icon: '🌵', label: 'Кактус', width: 48, height: 68, color: '#9ed67c' },
+        { icon: '🪨', label: 'Камень', width: 58, height: 50, color: '#b9bec8' },
+        { icon: '🐌', label: 'Улитка', width: 58, height: 48, color: '#e7c17c' },
+        { icon: '🕷️', label: 'Паук', width: 52, height: 50, color: '#c8b2dc' },
+        { icon: '🦂', label: 'Скорпион', width: 58, height: 52, color: '#e4a873' },
+        { icon: '🍄', label: 'Гриб', width: 50, height: 60, color: '#f19aa6' },
+        { icon: '🦀', label: 'Краб', width: 58, height: 50, color: '#ef8d75' },
+        { icon: '🧨', label: 'Динамит', width: 48, height: 62, color: '#ef7777' },
+        { icon: '🧱', label: 'Кирпич', width: 58, height: 48, color: '#d88c69' },
+        { icon: '🪵', label: 'Бревно', width: 62, height: 46, color: '#bd8b62' },
+        { icon: '🦔', label: 'Ёж', width: 56, height: 52, color: '#c4a47b' },
+        { icon: '⚡', label: 'Молния', width: 46, height: 64, color: '#f5dc63' },
+    ];
+
     const state = {
         running: false,
         y: 0,
@@ -269,12 +282,26 @@
         gravity: 1800,
         best: Number(localStorage.getItem('vesely-sush-best') || 0),
         frame: 0,
+        obstacleType: -1,
     };
 
     bestNode.textContent = state.best;
 
     const resetObstacle = () => {
         state.obstacleX = game.clientWidth + 20 + Math.random() * 100;
+        let nextType = Math.floor(Math.random() * obstacleTypes.length);
+
+        if (nextType === state.obstacleType) {
+            nextType = (nextType + 1) % obstacleTypes.length;
+        }
+
+        state.obstacleType = nextType;
+        const type = obstacleTypes[nextType];
+        obstacle.textContent = type.icon;
+        obstacle.setAttribute('aria-label', type.label);
+        obstacle.style.width = `${type.width}px`;
+        obstacle.style.height = `${type.height}px`;
+        obstacle.style.backgroundColor = type.color;
     };
 
     const jump = () => {
@@ -359,8 +386,8 @@
     }
 
     startButton.addEventListener('click', start);
-    game.addEventListener('pointerdown', event => {
-        if (event.target === startButton) return;
+    document.addEventListener('pointerdown', event => {
+        if (event.target.closest('#start')) return;
         jump();
     });
     window.addEventListener('keydown', event => {
