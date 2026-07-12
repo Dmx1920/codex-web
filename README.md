@@ -38,4 +38,4 @@ php artisan test
 ./vendor/bin/pint --test
 ```
 
-Рабочая версия: [https://sush.run.place](https://sush.run.place)
+Рабочая версия: [https://playsush.mooo.com](https://playsush.mooo.com)

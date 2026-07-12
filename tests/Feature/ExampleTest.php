@@ -32,7 +32,10 @@ class ExampleTest extends TestCase
             ->assertSee('game.clientWidth + 20 + Math.random() * 100', escape: false)
             ->assertSee("document.addEventListener('pointerdown'", escape: false)
             ->assertSee('const obstacleTypes = [', escape: false)
-            ->assertSee('obstacleTypes.length', escape: false);
+            ->assertSee('obstacleTypes.length', escape: false)
+            ->assertSee('state.speed = Math.min(520, state.speed + 14);', escape: false)
+            ->assertSee('background: transparent;', escape: false)
+            ->assertSee('box-shadow: none;', escape: false);
 
         $this->assertSame(15, substr_count($response->getContent(), "{ icon: '"));
     }
