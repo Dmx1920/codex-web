@@ -36,7 +36,7 @@ class ExampleTest extends TestCase
             ->assertSee('state.speed = Math.min(520, state.speed + 14);', escape: false)
             ->assertSee('background: transparent;', escape: false)
             ->assertSee('box-shadow: none;', escape: false)
-            ->assertSee('font-size: 40px;', escape: false)
+            ->assertSee('obstacle.style.fontSize = `${type.fontSize}px`;', escape: false)
             ->assertDontSee('filter: drop-shadow', escape: false);
 
         $this->assertSame(15, substr_count($response->getContent(), "{ icon: '"));

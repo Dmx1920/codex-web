@@ -251,21 +251,21 @@
     const status = document.querySelector('#status');
 
     const obstacleTypes = [
-        { icon: '🐍', label: 'Змея', width: 60, height: 53 },
-        { icon: '💩', label: 'Какашка', width: 55, height: 64 },
-        { icon: '🔥', label: 'Огонь', width: 53, height: 70 },
-        { icon: '🌵', label: 'Кактус', width: 53, height: 75 },
-        { icon: '🪨', label: 'Камень', width: 64, height: 55 },
-        { icon: '🐌', label: 'Улитка', width: 64, height: 53 },
-        { icon: '🕷️', label: 'Паук', width: 57, height: 55 },
-        { icon: '🦂', label: 'Скорпион', width: 64, height: 57 },
-        { icon: '🍄', label: 'Гриб', width: 55, height: 66 },
-        { icon: '🦀', label: 'Краб', width: 64, height: 55 },
-        { icon: '🧨', label: 'Динамит', width: 53, height: 68 },
-        { icon: '🧱', label: 'Кирпич', width: 64, height: 53 },
-        { icon: '🪵', label: 'Бревно', width: 68, height: 51 },
-        { icon: '🦔', label: 'Ёж', width: 62, height: 57 },
-        { icon: '⚡', label: 'Молния', width: 51, height: 70 },
+        { icon: '🐍', label: 'Змея', width: 60, height: 53, fontSize: 42 },
+        { icon: '💩', label: 'Какашка', width: 55, height: 64, fontSize: 44 },
+        { icon: '🔥', label: 'Огонь', width: 53, height: 70, fontSize: 46 },
+        { icon: '🌵', label: 'Кактус', width: 53, height: 75, fontSize: 46 },
+        { icon: '🪨', label: 'Камень', width: 64, height: 55, fontSize: 42 },
+        { icon: '🐌', label: 'Улитка', width: 64, height: 53, fontSize: 42 },
+        { icon: '🕷️', label: 'Паук', width: 57, height: 55, fontSize: 43 },
+        { icon: '🦂', label: 'Скорпион', width: 64, height: 57, fontSize: 43 },
+        { icon: '🍄', label: 'Гриб', width: 55, height: 66, fontSize: 44 },
+        { icon: '🦀', label: 'Краб', width: 64, height: 55, fontSize: 43 },
+        { icon: '🧨', label: 'Динамит', width: 53, height: 68, fontSize: 45 },
+        { icon: '🧱', label: 'Кирпич', width: 64, height: 53, fontSize: 42 },
+        { icon: '🪵', label: 'Бревно', width: 68, height: 51, fontSize: 42 },
+        { icon: '🦔', label: 'Ёж', width: 62, height: 57, fontSize: 43 },
+        { icon: '⚡', label: 'Молния', width: 51, height: 70, fontSize: 46 },
     ];
 
     const state = {
@@ -299,6 +299,7 @@
         obstacle.setAttribute('aria-label', type.label);
         obstacle.style.width = `${type.width}px`;
         obstacle.style.height = `${type.height}px`;
+        obstacle.style.fontSize = `${type.fontSize}px`;
     };
 
     const jump = () => {
