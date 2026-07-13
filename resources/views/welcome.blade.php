@@ -251,21 +251,26 @@
     const status = document.querySelector('#status');
 
     const obstacleTypes = [
-        { icon: '🐍', label: 'Змея', width: 60, height: 53, fontSize: 42 },
-        { icon: '💩', label: 'Какашка', width: 55, height: 64, fontSize: 44 },
-        { icon: '🔥', label: 'Огонь', width: 53, height: 70, fontSize: 46 },
-        { icon: '🌵', label: 'Кактус', width: 53, height: 75, fontSize: 46 },
-        { icon: '🪨', label: 'Камень', width: 64, height: 55, fontSize: 42 },
-        { icon: '🐌', label: 'Улитка', width: 64, height: 53, fontSize: 42 },
-        { icon: '🕷️', label: 'Паук', width: 57, height: 55, fontSize: 43 },
-        { icon: '🦂', label: 'Скорпион', width: 64, height: 57, fontSize: 43 },
-        { icon: '🍄', label: 'Гриб', width: 55, height: 66, fontSize: 44 },
-        { icon: '🦀', label: 'Краб', width: 64, height: 55, fontSize: 43 },
-        { icon: '🧨', label: 'Динамит', width: 53, height: 68, fontSize: 45 },
-        { icon: '🧱', label: 'Кирпич', width: 64, height: 53, fontSize: 42 },
-        { icon: '🪵', label: 'Бревно', width: 68, height: 51, fontSize: 42 },
-        { icon: '🦔', label: 'Ёж', width: 62, height: 57, fontSize: 43 },
-        { icon: '⚡', label: 'Молния', width: 51, height: 70, fontSize: 46 },
+        { icon: '🐍', label: 'Змея', lane: 'ground', width: 60, height: 53, fontSize: 42 },
+        { icon: '💩', label: 'Какашка', lane: 'ground', width: 55, height: 64, fontSize: 44 },
+        { icon: '🔥', label: 'Огонь', lane: 'ground', width: 53, height: 70, fontSize: 46 },
+        { icon: '🌵', label: 'Кактус', lane: 'ground', width: 53, height: 75, fontSize: 46 },
+        { icon: '🪨', label: 'Камень', lane: 'ground', width: 64, height: 55, fontSize: 42 },
+        { icon: '🐌', label: 'Улитка', lane: 'ground', width: 64, height: 53, fontSize: 42 },
+        { icon: '🕷️', label: 'Паук', lane: 'ground', width: 57, height: 55, fontSize: 43 },
+        { icon: '🦂', label: 'Скорпион', lane: 'ground', width: 64, height: 57, fontSize: 43 },
+        { icon: '🍄', label: 'Гриб', lane: 'ground', width: 55, height: 66, fontSize: 44 },
+        { icon: '🦀', label: 'Краб', lane: 'ground', width: 64, height: 55, fontSize: 43 },
+        { icon: '🧨', label: 'Динамит', lane: 'ground', width: 53, height: 68, fontSize: 45 },
+        { icon: '🧱', label: 'Кирпич', lane: 'ground', width: 64, height: 53, fontSize: 42 },
+        { icon: '🪵', label: 'Бревно', lane: 'ground', width: 68, height: 51, fontSize: 42 },
+        { icon: '🦔', label: 'Ёж', lane: 'ground', width: 62, height: 57, fontSize: 43 },
+        { icon: '⚡', label: 'Молния', lane: 'ground', width: 51, height: 70, fontSize: 46 },
+        { icon: '🐦', label: 'Птица', lane: 'air', width: 62, height: 52, fontSize: 44 },
+        { icon: '☁️', label: 'Тучка', lane: 'air', width: 68, height: 48, fontSize: 46 },
+        { icon: '🦇', label: 'Летучая мышь', lane: 'air', width: 64, height: 50, fontSize: 45 },
+        { icon: '🐝', label: 'Пчела', lane: 'air', width: 56, height: 48, fontSize: 42 },
+        { icon: '🛸', label: 'НЛО', lane: 'air', width: 70, height: 48, fontSize: 46 },
     ];
 
     const state = {
@@ -280,26 +285,40 @@
         gravity: 1800,
         best: Number(localStorage.getItem('vesely-sush-best') || 0),
         frame: 0,
-        obstacleType: -1,
+        lastObstacleLabel: '',
     };
 
     bestNode.textContent = state.best;
 
-    const resetObstacle = () => {
-        state.obstacleX = game.clientWidth + 20 + Math.random() * 100;
-        let nextType = Math.floor(Math.random() * obstacleTypes.length);
+    const positionObstacle = (lane = obstacle.dataset.lane) => {
+        const airClearance = Math.ceil(creature.clientHeight * .88);
+        obstacle.style.bottom = lane === 'air' ? `calc(33% + ${airClearance}px)` : '33%';
+    };
 
-        if (nextType === state.obstacleType) {
-            nextType = (nextType + 1) % obstacleTypes.length;
+    const resetObstacle = () => {
+        const jumpCycle = (2 * state.jumpVelocity) / state.gravity;
+        const collisionX = creature.offsetLeft + creature.clientWidth * .67;
+        const distanceToCollision = game.clientWidth - collisionX;
+        const minimumGap = Math.max(20, state.speed * (jumpCycle + .12) - distanceToCollision);
+        const randomGap = Math.random() * state.speed * .65;
+        state.obstacleX = game.clientWidth + minimumGap + randomGap;
+
+        const lane = Math.random() < .2 ? 'air' : 'ground';
+        const candidates = obstacleTypes.filter(type => type.lane === lane);
+        let type = candidates[Math.floor(Math.random() * candidates.length)];
+
+        if (type.label === state.lastObstacleLabel) {
+            type = candidates[(candidates.indexOf(type) + 1) % candidates.length];
         }
 
-        state.obstacleType = nextType;
-        const type = obstacleTypes[nextType];
+        state.lastObstacleLabel = type.label;
         obstacle.textContent = type.icon;
         obstacle.setAttribute('aria-label', type.label);
+        obstacle.dataset.lane = type.lane;
         obstacle.style.width = `${type.width}px`;
         obstacle.style.height = `${type.height}px`;
         obstacle.style.fontSize = `${type.fontSize}px`;
+        positionObstacle(type.lane);
     };
 
     const jump = () => {
@@ -400,8 +419,9 @@
         }
     });
     window.addEventListener('resize', () => {
-        if (!state.running) resetObstacle();
+        state.running ? positionObstacle() : resetObstacle();
     });
+    creature.addEventListener('load', () => positionObstacle());
 
     resetObstacle();
 })();

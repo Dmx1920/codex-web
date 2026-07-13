@@ -29,16 +29,21 @@ class ExampleTest extends TestCase
             ->assertSee('@keyframes bob { to { translate: 0 -5px;', escape: false)
             ->assertSee('scaleX(-1)', escape: false)
             ->assertSee('const paddingX = a.width * .33;', escape: false)
-            ->assertSee('game.clientWidth + 20 + Math.random() * 100', escape: false)
+            ->assertSee("Math.random() < .2 ? 'air' : 'ground'", escape: false)
+            ->assertSee('const collisionX = creature.offsetLeft + creature.clientWidth * .67;', escape: false)
+            ->assertSee('const minimumGap = Math.max(20, state.speed * (jumpCycle + .12) - distanceToCollision);', escape: false)
+            ->assertSee('const airClearance = Math.ceil(creature.clientHeight * .88);', escape: false)
             ->assertSee("document.addEventListener('pointerdown'", escape: false)
             ->assertSee('const obstacleTypes = [', escape: false)
-            ->assertSee('obstacleTypes.length', escape: false)
+            ->assertSee('obstacleTypes.filter(type => type.lane === lane)', escape: false)
             ->assertSee('state.speed = Math.min(520, state.speed + 14);', escape: false)
             ->assertSee('background: transparent;', escape: false)
             ->assertSee('box-shadow: none;', escape: false)
             ->assertSee('obstacle.style.fontSize = `${type.fontSize}px`;', escape: false)
             ->assertDontSee('filter: drop-shadow', escape: false);
 
-        $this->assertSame(15, substr_count($response->getContent(), "{ icon: '"));
+        $this->assertSame(20, substr_count($response->getContent(), "{ icon: '"));
+        $this->assertSame(15, substr_count($response->getContent(), "lane: 'ground'"));
+        $this->assertSame(5, substr_count($response->getContent(), "lane: 'air'"));
     }
 }
