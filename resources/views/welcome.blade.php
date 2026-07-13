@@ -365,9 +365,14 @@
         const b = obstacle.getBoundingClientRect();
         const paddingX = a.width * .33;
         const paddingY = a.height * .22;
+        const horizontalOverlap = a.right - paddingX > b.left &&
+            a.left + paddingX < b.right;
 
-        return a.right - paddingX > b.left &&
-            a.left + paddingX < b.right &&
+        if (obstacle.dataset.lane === 'air') {
+            return horizontalOverlap && state.y > 6;
+        }
+
+        return horizontalOverlap &&
             a.bottom - paddingY > b.top &&
             a.top + paddingY < b.bottom;
     };
@@ -419,7 +424,7 @@
         }
     });
     window.addEventListener('resize', () => {
-        state.running ? positionObstacle() : resetObstacle();
+        resetObstacle();
     });
     creature.addEventListener('load', () => positionObstacle());
 

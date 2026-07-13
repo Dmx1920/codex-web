@@ -33,6 +33,8 @@ class ExampleTest extends TestCase
             ->assertSee('const collisionX = creature.offsetLeft + creature.clientWidth * .67;', escape: false)
             ->assertSee('const minimumGap = Math.max(20, state.speed * (jumpCycle + .12) - distanceToCollision);', escape: false)
             ->assertSee('const airClearance = Math.ceil(creature.clientHeight * .88);', escape: false)
+            ->assertSee("if (obstacle.dataset.lane === 'air')", escape: false)
+            ->assertSee('return horizontalOverlap && state.y > 6;', escape: false)
             ->assertSee("document.addEventListener('pointerdown'", escape: false)
             ->assertSee('const obstacleTypes = [', escape: false)
             ->assertSee('obstacleTypes.filter(type => type.lane === lane)', escape: false)
@@ -40,6 +42,7 @@ class ExampleTest extends TestCase
             ->assertSee('background: transparent;', escape: false)
             ->assertSee('box-shadow: none;', escape: false)
             ->assertSee('obstacle.style.fontSize = `${type.fontSize}px`;', escape: false)
+            ->assertSee("window.addEventListener('resize', () => {\n        resetObstacle();", escape: false)
             ->assertDontSee('filter: drop-shadow', escape: false);
 
         $this->assertSame(20, substr_count($response->getContent(), "{ icon: '"));
