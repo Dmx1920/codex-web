@@ -237,6 +237,8 @@
     </div>
 </main>
 
+<audio id="lose-sound" preload="none" src="{{ asset('assets/lose.ogg') }}"></audio>
+
 <script>
 (() => {
     const game = document.querySelector('#game');
@@ -249,6 +251,10 @@
     const panelCopy = document.querySelector('#panel-copy');
     const startButton = document.querySelector('#start');
     const status = document.querySelector('#status');
+    const loseSound = document.querySelector('#lose-sound');
+
+    let audioContext = null;
+    let loseSoundBufferPromise = null;
 
     const obstacleTypes = [
         { icon: '🐍', label: 'Змея', lane: 'ground', width: 60, height: 53, fontSize: 42 },
@@ -329,7 +335,33 @@
         }
     };
 
+    const prepareLoseSound = () => {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        audioContext ??= new AudioContext();
+        audioContext.resume().catch(() => {});
+        loseSoundBufferPromise ??= fetch(loseSound.src)
+            .then(response => {
+                if (!response.ok) throw new Error('Unable to load lose sound');
+                return response.arrayBuffer();
+            })
+            .then(data => audioContext.decodeAudioData(data))
+            .catch(() => null);
+    };
+
+    const playLoseSound = async () => {
+        const buffer = await loseSoundBufferPromise;
+        if (!audioContext || !buffer) return;
+
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start();
+    };
+
     const start = () => {
+        prepareLoseSound();
         state.running = true;
         state.y = 0;
         state.velocity = 0;
@@ -348,6 +380,7 @@
 
     const finish = () => {
         state.running = false;
+        playLoseSound();
         creature.classList.remove('running');
         creature.classList.add('hit');
         state.best = Math.max(state.best, Math.floor(state.score));

@@ -49,4 +49,18 @@ class ExampleTest extends TestCase
         $this->assertSame(15, substr_count($response->getContent(), "lane: 'ground'"));
         $this->assertSame(5, substr_count($response->getContent(), "lane: 'air'"));
     }
+
+    public function test_lose_sound_is_available_and_prepared_during_game_start(): void
+    {
+        $response = $this->get('/');
+
+        $response
+            ->assertOk()
+            ->assertSee('assets/lose.ogg')
+            ->assertSee('const prepareLoseSound = () => {', escape: false)
+            ->assertSee('audioContext ??= new AudioContext();', escape: false)
+            ->assertSee('playLoseSound();', escape: false);
+
+        $this->assertFileExists(public_path('assets/lose.ogg'));
+    }
 }

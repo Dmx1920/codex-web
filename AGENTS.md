@@ -52,3 +52,5 @@ For front-end changes, also open the game at a mobile and desktop viewport and p
 - Production must use `APP_ENV=production` and `APP_DEBUG=false`.
 - Run `php artisan optimize` after deployment.
 - Never expose MariaDB publicly.
+- After the required checks and review pass, deploy the verified change to production by default and run a production smoke test. Do not stop at local verification unless the user explicitly asks not to deploy.
+- Commit and push the exact verified version so the production state remains reproducible from GitHub.
