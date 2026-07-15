@@ -57,10 +57,30 @@ class ExampleTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('assets/lose.ogg')
-            ->assertSee('const prepareLoseSound = () => {', escape: false)
+            ->assertSee('const prepareSounds = () => {', escape: false)
             ->assertSee('audioContext ??= new AudioContext();', escape: false)
-            ->assertSee('playLoseSound();', escape: false);
+            ->assertSee('playSound(loseSoundBufferPromise).catch(() => {});', escape: false);
 
         $this->assertFileExists(public_path('assets/lose.ogg'));
+    }
+
+    public function test_jump_sound_is_available_and_plays_only_for_an_accepted_jump(): void
+    {
+        $response = $this->get('/');
+
+        $response
+            ->assertOk()
+            ->assertSee('assets/jump.ogg')
+            ->assertSee('jumpSoundBufferPromise ??= loadSound(jumpSound);', escape: false)
+            ->assertSee('playSound(jumpSoundBufferPromise).catch(() => {});', escape: false);
+
+        $content = $response->getContent();
+        $groundedCheck = strpos($content, 'if (state.y <= 1 && state.velocity === 0) {');
+        $playJumpSound = strpos($content, 'playSound(jumpSoundBufferPromise).catch(() => {});');
+
+        $this->assertNotFalse($groundedCheck);
+        $this->assertNotFalse($playJumpSound);
+        $this->assertGreaterThan($groundedCheck, $playJumpSound);
+        $this->assertFileExists(public_path('assets/jump.ogg'));
     }
 }

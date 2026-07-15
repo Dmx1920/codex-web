@@ -237,6 +237,7 @@
     </div>
 </main>
 
+<audio id="jump-sound" preload="none" src="{{ asset('assets/jump.ogg') }}"></audio>
 <audio id="lose-sound" preload="none" src="{{ asset('assets/lose.ogg') }}"></audio>
 
 <script>
@@ -251,9 +252,11 @@
     const panelCopy = document.querySelector('#panel-copy');
     const startButton = document.querySelector('#start');
     const status = document.querySelector('#status');
+    const jumpSound = document.querySelector('#jump-sound');
     const loseSound = document.querySelector('#lose-sound');
 
     let audioContext = null;
+    let jumpSoundBufferPromise = null;
     let loseSoundBufferPromise = null;
 
     const obstacleTypes = [
@@ -331,27 +334,31 @@
         if (!state.running) return;
         if (state.y <= 1 && state.velocity === 0) {
             state.velocity = state.jumpVelocity;
+            playSound(jumpSoundBufferPromise).catch(() => {});
             status.textContent = 'Прыг!';
         }
     };
 
-    const prepareLoseSound = () => {
+    const loadSound = sound => fetch(sound.src)
+        .then(response => {
+            if (!response.ok) throw new Error('Unable to load game sound');
+            return response.arrayBuffer();
+        })
+        .then(data => audioContext.decodeAudioData(data))
+        .catch(() => null);
+
+    const prepareSounds = () => {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
 
         audioContext ??= new AudioContext();
         audioContext.resume().catch(() => {});
-        loseSoundBufferPromise ??= fetch(loseSound.src)
-            .then(response => {
-                if (!response.ok) throw new Error('Unable to load lose sound');
-                return response.arrayBuffer();
-            })
-            .then(data => audioContext.decodeAudioData(data))
-            .catch(() => null);
+        jumpSoundBufferPromise ??= loadSound(jumpSound);
+        loseSoundBufferPromise ??= loadSound(loseSound);
     };
 
-    const playLoseSound = async () => {
-        const buffer = await loseSoundBufferPromise;
+    const playSound = async bufferPromise => {
+        const buffer = await bufferPromise;
         if (!audioContext || !buffer) return;
 
         const source = audioContext.createBufferSource();
@@ -361,7 +368,7 @@
     };
 
     const start = () => {
-        prepareLoseSound();
+        prepareSounds();
         state.running = true;
         state.y = 0;
         state.velocity = 0;
@@ -380,7 +387,7 @@
 
     const finish = () => {
         state.running = false;
-        playLoseSound();
+        playSound(loseSoundBufferPromise).catch(() => {});
         creature.classList.remove('running');
         creature.classList.add('hit');
         state.best = Math.max(state.best, Math.floor(state.score));
