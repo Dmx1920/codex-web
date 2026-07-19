@@ -84,6 +84,29 @@ class ExampleTest extends TestCase
         $this->assertFileExists(public_path('assets/jump.ogg'));
     }
 
+    public function test_eating_sound_is_available_and_plays_when_food_is_collected(): void
+    {
+        $response = $this->get('/');
+        $content = $response->getContent();
+
+        $response
+            ->assertOk()
+            ->assertSee('assets/eating.ogg')
+            ->assertSee('eatSoundBufferPromise ??= loadSound(eatSound);', escape: false)
+            ->assertSee('playSound(eatSoundBufferPromise).catch(() => {});', escape: false);
+
+        $eatFood = strpos($content, 'const eatFood = () => {');
+        $playEatingSound = strpos($content, 'playSound(eatSoundBufferPromise).catch(() => {});');
+        $restoreEnergy = strpos($content, 'state.energy = 100;', $eatFood);
+
+        $this->assertNotFalse($eatFood);
+        $this->assertNotFalse($playEatingSound);
+        $this->assertNotFalse($restoreEnergy);
+        $this->assertGreaterThan($eatFood, $playEatingSound);
+        $this->assertLessThan($restoreEnergy, $playEatingSound);
+        $this->assertFileExists(public_path('assets/eating.ogg'));
+    }
+
     public function test_energy_and_food_balance_match_the_game_design(): void
     {
         $response = $this->get('/');
@@ -92,6 +115,9 @@ class ExampleTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('id="energy"', escape: false)
+            ->assertSee('<span class="energy-icon" aria-hidden="true">🥣</span>', escape: false)
+            ->assertSee('grid-template-columns: auto minmax(0, 1fr);', escape: false)
+            ->assertSee('<div class="energy-body">', escape: false)
             ->assertSee('id="status" role="status" aria-live="polite"', escape: false)
             ->assertSee('Миска с кормом')
             ->assertSee('миску с кормом не перепрыгивай')
@@ -121,6 +147,8 @@ class ExampleTest extends TestCase
             ->assertSee('display: grid;', escape: false)
             ->assertSee('grid-template-columns: minmax(0, .8fr) minmax(0, .95fr) minmax(118px, 1.45fr);', escape: false)
             ->assertSee(".score {\n                min-width: 0;", escape: false)
-            ->assertSee('.energy-score { min-width: 0; }', escape: false);
+            ->assertSee('.energy-score { min-width: 0; column-gap: 4px; }', escape: false)
+            ->assertSee('@media (max-width: 340px) {', escape: false)
+            ->assertSee('.score .energy-icon { font-size: 1.4rem; }', escape: false);
     }
 }

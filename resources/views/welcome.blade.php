@@ -72,8 +72,16 @@
         .score span { display: block; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
         .score strong { font-size: 1.45rem; }
 
-        .energy-score { min-width: 170px; }
+        .energy-score {
+            min-width: 170px;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: center;
+            column-gap: 8px;
+        }
+        .energy-body { min-width: 0; }
         .energy-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+        .score .energy-icon { display: block; font-size: 2.25rem; line-height: 1; }
         .energy-head strong { font-size: .95rem; }
         .energy-meter {
             display: block;
@@ -229,15 +237,23 @@
                 border-radius: 14px;
                 box-shadow: 3px 3px 0 var(--ink);
             }
-            .energy-score { min-width: 0; }
+            .energy-score { min-width: 0; column-gap: 4px; }
             .score span { font-size: .62rem; }
             .score strong { font-size: 1.15rem; }
-            .energy-head { gap: 4px; }
-            .energy-head strong { font-size: .82rem; }
+            .score .energy-icon { font-size: 1.55rem; }
+            .energy-head { gap: 2px; }
+            .energy-head strong { font-size: .78rem; }
             .energy-meter { height: 12px; margin-top: 4px; }
             .game-shell { min-height: 420px; }
             .creature { left: 3%; width: 145px; }
             .instructions { flex-direction: column; text-align: center; }
+        }
+
+        @media (max-width: 340px) {
+            .energy-score { column-gap: 3px; }
+            .score .energy-icon { font-size: 1.4rem; }
+            .energy-head span { font-size: .58rem; }
+            .energy-head strong { font-size: .72rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -253,8 +269,11 @@
             <div class="score"><span>Счёт</span><strong id="score">0</strong></div>
             <div class="score"><span>Рекорд</span><strong id="best">0</strong></div>
             <div class="score energy-score" id="energy-card">
-                <div class="energy-head"><span>Энергия</span><strong id="energy-value">100%</strong></div>
-                <progress class="energy-meter" id="energy" max="100" value="100" aria-label="Энергия суща"></progress>
+                <span class="energy-icon" aria-hidden="true">🥣</span>
+                <div class="energy-body">
+                    <div class="energy-head"><span>Энергия</span><strong id="energy-value">100%</strong></div>
+                    <progress class="energy-meter" id="energy" max="100" value="100" aria-label="Энергия суща"></progress>
+                </div>
             </div>
         </div>
     </header>
@@ -280,6 +299,7 @@
 
 <audio id="jump-sound" preload="none" src="{{ asset('assets/jump.ogg') }}"></audio>
 <audio id="lose-sound" preload="none" src="{{ asset('assets/lose.ogg') }}"></audio>
+<audio id="eat-sound" preload="none" src="{{ asset('assets/eating.ogg') }}"></audio>
 
 <script>
 (() => {
@@ -298,10 +318,12 @@
     const energyCard = document.querySelector('#energy-card');
     const jumpSound = document.querySelector('#jump-sound');
     const loseSound = document.querySelector('#lose-sound');
+    const eatSound = document.querySelector('#eat-sound');
 
     let audioContext = null;
     let jumpSoundBufferPromise = null;
     let loseSoundBufferPromise = null;
+    let eatSoundBufferPromise = null;
 
     const obstacleTypes = [
         { icon: '🐍', label: 'Змея', lane: 'ground', width: 60, height: 53, fontSize: 42 },
@@ -439,6 +461,7 @@
         audioContext.resume().catch(() => {});
         jumpSoundBufferPromise ??= loadSound(jumpSound);
         loseSoundBufferPromise ??= loadSound(loseSound);
+        eatSoundBufferPromise ??= loadSound(eatSound);
     };
 
     const playSound = async bufferPromise => {
@@ -499,6 +522,7 @@
     };
 
     const eatFood = () => {
+        playSound(eatSoundBufferPromise).catch(() => {});
         state.energy = 100;
         updateEnergy();
         status.textContent = 'Ням! Энергия восстановлена';
