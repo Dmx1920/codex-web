@@ -72,6 +72,27 @@
         .score span { display: block; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
         .score strong { font-size: 1.45rem; }
 
+        .energy-score { min-width: 170px; }
+        .energy-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+        .energy-head strong { font-size: .95rem; }
+        .energy-meter {
+            display: block;
+            width: 100%;
+            height: 14px;
+            margin-top: 6px;
+            overflow: hidden;
+            border: 2px solid var(--ink);
+            border-radius: 999px;
+            background: #fff;
+            appearance: none;
+        }
+        .energy-meter::-webkit-progress-bar { background: #fff; }
+        .energy-meter::-webkit-progress-value { background: #7fbe3f; transition: width .15s linear; }
+        .energy-meter::-moz-progress-bar { background: #7fbe3f; }
+        .energy-score.low .energy-head strong { color: var(--danger); }
+        .energy-score.low .energy-meter::-webkit-progress-value { background: var(--danger); }
+        .energy-score.low .energy-meter::-moz-progress-bar { background: var(--danger); }
+
         .game-shell {
             position: relative;
             overflow: hidden;
@@ -197,6 +218,7 @@
             .topbar { align-items: flex-start; }
             .scoreboard { flex-direction: column; }
             .score { min-width: 82px; padding: 6px 10px; }
+            .energy-score { min-width: 118px; }
             .score strong { font-size: 1.15rem; }
             .game-shell { min-height: 420px; }
             .creature { left: 3%; width: 145px; }
@@ -212,9 +234,13 @@
 <main class="page">
     <header class="topbar">
         <h1 class="brand">Весёлый сущ</h1>
-        <div class="scoreboard" aria-live="polite">
+        <div class="scoreboard">
             <div class="score"><span>Счёт</span><strong id="score">0</strong></div>
             <div class="score"><span>Рекорд</span><strong id="best">0</strong></div>
+            <div class="score energy-score" id="energy-card">
+                <div class="energy-head"><span>Энергия</span><strong id="energy-value">100%</strong></div>
+                <progress class="energy-meter" id="energy" max="100" value="100" aria-label="Энергия суща"></progress>
+            </div>
         </div>
     </header>
 
@@ -226,16 +252,19 @@
 
         <div class="panel" id="panel">
             <h2 id="panel-title">Пора веселиться!</h2>
-            <p id="panel-copy">Помоги сущу перепрыгивать всё подозрительное. Нажимай пробел или касайся игрового поля.</p>
+            <p id="panel-copy">Перепрыгивай препятствия, но миску с кормом не перепрыгивай — набеги на неё, чтобы восстановить энергию.</p>
             <button class="start-button" id="start" type="button">Начать забег</button>
         </div>
     </section>
 
     <div class="instructions">
-        <span><kbd>Пробел</kbd> или касание — прыжок</span>
-        <span class="status" id="status">Сущ ждёт приключений</span>
+        <span><kbd>Пробел</kbd> или касание — прыжок · миска — набеги на неё</span>
+        <span class="status" id="status" role="status" aria-live="polite">Сущ ждёт приключений</span>
     </div>
 </main>
+
+<audio id="jump-sound" preload="none" src="{{ asset('assets/jump.ogg') }}"></audio>
+<audio id="lose-sound" preload="none" src="{{ asset('assets/lose.ogg') }}"></audio>
 
 <script>
 (() => {
@@ -249,24 +278,48 @@
     const panelCopy = document.querySelector('#panel-copy');
     const startButton = document.querySelector('#start');
     const status = document.querySelector('#status');
+    const energyNode = document.querySelector('#energy');
+    const energyValue = document.querySelector('#energy-value');
+    const energyCard = document.querySelector('#energy-card');
+    const jumpSound = document.querySelector('#jump-sound');
+    const loseSound = document.querySelector('#lose-sound');
+
+    let audioContext = null;
+    let jumpSoundBufferPromise = null;
+    let loseSoundBufferPromise = null;
 
     const obstacleTypes = [
-        { icon: '🐍', label: 'Змея', width: 60, height: 53, fontSize: 42 },
-        { icon: '💩', label: 'Какашка', width: 55, height: 64, fontSize: 44 },
-        { icon: '🔥', label: 'Огонь', width: 53, height: 70, fontSize: 46 },
-        { icon: '🌵', label: 'Кактус', width: 53, height: 75, fontSize: 46 },
-        { icon: '🪨', label: 'Камень', width: 64, height: 55, fontSize: 42 },
-        { icon: '🐌', label: 'Улитка', width: 64, height: 53, fontSize: 42 },
-        { icon: '🕷️', label: 'Паук', width: 57, height: 55, fontSize: 43 },
-        { icon: '🦂', label: 'Скорпион', width: 64, height: 57, fontSize: 43 },
-        { icon: '🍄', label: 'Гриб', width: 55, height: 66, fontSize: 44 },
-        { icon: '🦀', label: 'Краб', width: 64, height: 55, fontSize: 43 },
-        { icon: '🧨', label: 'Динамит', width: 53, height: 68, fontSize: 45 },
-        { icon: '🧱', label: 'Кирпич', width: 64, height: 53, fontSize: 42 },
-        { icon: '🪵', label: 'Бревно', width: 68, height: 51, fontSize: 42 },
-        { icon: '🦔', label: 'Ёж', width: 62, height: 57, fontSize: 43 },
-        { icon: '⚡', label: 'Молния', width: 51, height: 70, fontSize: 46 },
+        { icon: '🐍', label: 'Змея', lane: 'ground', width: 60, height: 53, fontSize: 42 },
+        { icon: '💩', label: 'Какашка', lane: 'ground', width: 55, height: 64, fontSize: 44 },
+        { icon: '🔥', label: 'Огонь', lane: 'ground', width: 53, height: 70, fontSize: 46 },
+        { icon: '🌵', label: 'Кактус', lane: 'ground', width: 53, height: 75, fontSize: 46 },
+        { icon: '🪨', label: 'Камень', lane: 'ground', width: 64, height: 55, fontSize: 42 },
+        { icon: '🐌', label: 'Улитка', lane: 'ground', width: 64, height: 53, fontSize: 42 },
+        { icon: '🕷️', label: 'Паук', lane: 'ground', width: 57, height: 55, fontSize: 43 },
+        { icon: '🦂', label: 'Скорпион', lane: 'ground', width: 64, height: 57, fontSize: 43 },
+        { icon: '🍄', label: 'Гриб', lane: 'ground', width: 55, height: 66, fontSize: 44 },
+        { icon: '🦀', label: 'Краб', lane: 'ground', width: 64, height: 55, fontSize: 43 },
+        { icon: '🧨', label: 'Динамит', lane: 'ground', width: 53, height: 68, fontSize: 45 },
+        { icon: '🧱', label: 'Кирпич', lane: 'ground', width: 64, height: 53, fontSize: 42 },
+        { icon: '🪵', label: 'Бревно', lane: 'ground', width: 68, height: 51, fontSize: 42 },
+        { icon: '🦔', label: 'Ёж', lane: 'ground', width: 62, height: 57, fontSize: 43 },
+        { icon: '⚡', label: 'Молния', lane: 'ground', width: 51, height: 70, fontSize: 46 },
+        { icon: '🐦', label: 'Птица', lane: 'air', width: 62, height: 52, fontSize: 44 },
+        { icon: '☁️', label: 'Тучка', lane: 'air', width: 68, height: 48, fontSize: 46 },
+        { icon: '🦇', label: 'Летучая мышь', lane: 'air', width: 64, height: 50, fontSize: 45 },
+        { icon: '🐝', label: 'Пчела', lane: 'air', width: 56, height: 48, fontSize: 42 },
+        { icon: '🛸', label: 'НЛО', lane: 'air', width: 70, height: 48, fontSize: 46 },
     ];
+
+    const foodType = {
+        icon: '🥣',
+        label: 'Миска с кормом',
+        lane: 'ground',
+        kind: 'food',
+        width: 68,
+        height: 54,
+        fontSize: 46,
+    };
 
     const state = {
         running: false,
@@ -278,46 +331,124 @@
         speed: 280,
         jumpVelocity: 820,
         gravity: 1800,
+        energy: 100,
+        energyCostPerObstacle: 2.5,
+        obstacleTravelDistance: 1,
+        obstaclesSinceFood: 0,
+        foodIntervalMin: 10,
+        foodIntervalMax: 12,
+        nextFoodAfter: 10,
         best: Number(localStorage.getItem('vesely-sush-best') || 0),
         frame: 0,
-        obstacleType: -1,
+        lastObstacleLabel: '',
     };
 
     bestNode.textContent = state.best;
 
-    const resetObstacle = () => {
-        state.obstacleX = game.clientWidth + 20 + Math.random() * 100;
-        let nextType = Math.floor(Math.random() * obstacleTypes.length);
+    const updateEnergy = () => {
+        const value = Math.max(0, Math.min(100, state.energy));
+        energyNode.value = value;
+        energyValue.textContent = `${Math.ceil(value)}%`;
+        energyCard.classList.toggle('low', value <= 25);
+    };
 
-        if (nextType === state.obstacleType) {
-            nextType = (nextType + 1) % obstacleTypes.length;
+    const randomFoodInterval = () => state.foodIntervalMin +
+        Math.floor(Math.random() * (state.foodIntervalMax - state.foodIntervalMin + 1));
+
+    const positionObstacle = (lane = obstacle.dataset.lane) => {
+        const airClearance = Math.ceil(creature.clientHeight * .88);
+        obstacle.style.bottom = lane === 'air' ? `calc(33% + ${airClearance}px)` : '33%';
+    };
+
+    const resetObstacle = () => {
+        const jumpCycle = (2 * state.jumpVelocity) / state.gravity;
+        const collisionX = creature.offsetLeft + creature.clientWidth * .67;
+        const distanceToCollision = game.clientWidth - collisionX;
+        const minimumGap = Math.max(20, state.speed * (jumpCycle + .12) - distanceToCollision);
+        const randomGap = Math.random() * state.speed * .65;
+        state.obstacleX = game.clientWidth + minimumGap + randomGap;
+        state.obstacleTravelDistance = Math.max(1, state.obstacleX + 100);
+
+        const shouldSpawnFood = state.running && state.obstaclesSinceFood >= state.nextFoodAfter;
+        let type;
+
+        if (shouldSpawnFood) {
+            type = foodType;
+            state.obstaclesSinceFood = 0;
+            state.nextFoodAfter = randomFoodInterval();
+        } else {
+            const lane = Math.random() < .2 ? 'air' : 'ground';
+            const candidates = obstacleTypes.filter(candidate => candidate.lane === lane);
+            type = candidates[Math.floor(Math.random() * candidates.length)];
+
+            if (type.label === state.lastObstacleLabel) {
+                type = candidates[(candidates.indexOf(type) + 1) % candidates.length];
+            }
+
+            if (state.running) state.obstaclesSinceFood += 1;
         }
 
-        state.obstacleType = nextType;
-        const type = obstacleTypes[nextType];
+        state.lastObstacleLabel = type.label;
         obstacle.textContent = type.icon;
         obstacle.setAttribute('aria-label', type.label);
+        obstacle.dataset.lane = type.lane;
+        obstacle.dataset.kind = type.kind || 'hazard';
         obstacle.style.width = `${type.width}px`;
         obstacle.style.height = `${type.height}px`;
         obstacle.style.fontSize = `${type.fontSize}px`;
+        positionObstacle(type.lane);
     };
 
     const jump = () => {
         if (!state.running) return;
         if (state.y <= 1 && state.velocity === 0) {
             state.velocity = state.jumpVelocity;
+            playSound(jumpSoundBufferPromise).catch(() => {});
             status.textContent = 'Прыг!';
         }
     };
 
+    const loadSound = sound => fetch(sound.src)
+        .then(response => {
+            if (!response.ok) throw new Error('Unable to load game sound');
+            return response.arrayBuffer();
+        })
+        .then(data => audioContext.decodeAudioData(data))
+        .catch(() => null);
+
+    const prepareSounds = () => {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        audioContext ??= new AudioContext();
+        audioContext.resume().catch(() => {});
+        jumpSoundBufferPromise ??= loadSound(jumpSound);
+        loseSoundBufferPromise ??= loadSound(loseSound);
+    };
+
+    const playSound = async bufferPromise => {
+        const buffer = await bufferPromise;
+        if (!audioContext || !buffer) return;
+
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start();
+    };
+
     const start = () => {
+        prepareSounds();
         state.running = true;
         state.y = 0;
         state.velocity = 0;
         state.score = 0;
         state.speed = 280;
+        state.energy = 100;
+        state.obstaclesSinceFood = 0;
+        state.nextFoodAfter = randomFoodInterval();
         state.lastTime = performance.now();
         scoreNode.textContent = '0';
+        updateEnergy();
         panel.hidden = true;
         creature.classList.add('running');
         creature.classList.remove('hit');
@@ -327,18 +458,36 @@
         state.frame = requestAnimationFrame(tick);
     };
 
-    const finish = () => {
+    const finish = (reason = 'obstacle') => {
         state.running = false;
+        playSound(loseSoundBufferPromise).catch(() => {});
         creature.classList.remove('running');
-        creature.classList.add('hit');
+        creature.classList.toggle('hit', reason === 'obstacle');
         state.best = Math.max(state.best, Math.floor(state.score));
         localStorage.setItem('vesely-sush-best', String(state.best));
         bestNode.textContent = state.best;
-        panelTitle.textContent = 'Ой, подозрительное!';
-        panelCopy.textContent = `Сущ набрал ${Math.floor(state.score)} очков. Ещё один забег?`;
+        panelTitle.textContent = reason === 'energy' ? 'Сущ проголодался!' : 'Ой, подозрительное!';
+        panelCopy.textContent = reason === 'energy'
+            ? `Энергия закончилась на ${Math.floor(state.score)} очках. Не пропускай миски с кормом!`
+            : `Сущ набрал ${Math.floor(state.score)} очков. Ещё один забег?`;
         startButton.textContent = 'Попробовать снова';
         panel.hidden = false;
-        status.textContent = 'Сущ делает вид, что так и задумано';
+        status.textContent = reason === 'energy'
+            ? 'Сущ устал и остановился'
+            : 'Сущ делает вид, что так и задумано';
+    };
+
+    const completeObstacle = () => {
+        state.score += 10;
+        state.speed = Math.min(520, state.speed + 14);
+        resetObstacle();
+    };
+
+    const eatFood = () => {
+        state.energy = 100;
+        updateEnergy();
+        status.textContent = 'Ням! Энергия восстановлена';
+        completeObstacle();
     };
 
     const collides = () => {
@@ -346,9 +495,14 @@
         const b = obstacle.getBoundingClientRect();
         const paddingX = a.width * .33;
         const paddingY = a.height * .22;
+        const horizontalOverlap = a.right - paddingX > b.left &&
+            a.left + paddingX < b.right;
 
-        return a.right - paddingX > b.left &&
-            a.left + paddingX < b.right &&
+        if (obstacle.dataset.lane === 'air') {
+            return horizontalOverlap && state.y > 6;
+        }
+
+        return horizontalOverlap &&
             a.bottom - paddingY > b.top &&
             a.top + paddingY < b.bottom;
     };
@@ -356,7 +510,7 @@
     function tick(now) {
         if (!state.running) return;
 
-        const dt = Math.min((now - state.lastTime) / 1000, .08);
+        const dt = Math.max(0, Math.min((now - state.lastTime) / 1000, .08));
         state.lastTime = now;
         state.velocity -= state.gravity * dt;
         state.y = Math.max(0, state.y + state.velocity * dt);
@@ -365,10 +519,13 @@
 
         state.obstacleX -= state.speed * dt;
         if (state.obstacleX < -100) {
-            state.score += 10;
-            state.speed = Math.min(520, state.speed + 14);
-            resetObstacle();
+            completeObstacle();
         }
+
+        const energyDrainPerSecond = state.speed * state.energyCostPerObstacle /
+            state.obstacleTravelDistance;
+        state.energy = Math.max(0, state.energy - energyDrainPerSecond * dt);
+        updateEnergy();
 
         state.score += dt;
         scoreNode.textContent = Math.floor(state.score);
@@ -376,7 +533,16 @@
         obstacle.style.transform = `translateX(${state.obstacleX}px)`;
 
         if (collides()) {
-            finish();
+            if (obstacle.dataset.kind === 'food') {
+                eatFood();
+            } else {
+                finish('obstacle');
+                return;
+            }
+        }
+
+        if (state.energy === 0) {
+            finish('energy');
             return;
         }
 
@@ -400,8 +566,9 @@
         }
     });
     window.addEventListener('resize', () => {
-        if (!state.running) resetObstacle();
+        positionObstacle();
     });
+    creature.addEventListener('load', () => positionObstacle());
 
     resetObstacle();
 })();

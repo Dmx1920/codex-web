@@ -21,6 +21,18 @@
 - Avoid new dependencies unless they materially reduce complexity.
 - Treat user-provided artwork as an original project asset; do not replace or transform it without approval.
 
+## Learning workflow
+
+The primary goal of this project is learning to use Codex effectively; shipping the game is the practical exercise.
+
+- Before a substantial action, briefly explain what will be done, why, and what trade-offs matter.
+- After the action, summarize the result, the evidence used to verify it, and the key lesson.
+- Proactively introduce relevant technologies, tools, and Codex capabilities that the user may not know.
+- Compare alternatives when the choice is educational, and state why the selected option fits this project.
+- Let the user perform an important step when doing it manually teaches a reusable skill; automate repetitive work.
+- Use independent agents for bounded reviews such as pre-merge correctness, security, and regression audits.
+- Do not hide failures or permission issues; explain their cause and the safer configuration that resolves them.
+
 ## Verification
 
 Run before committing:
@@ -35,8 +47,10 @@ For front-end changes, also open the game at a mobile and desktop viewport and p
 
 ## Deployment
 
-- Production host: `sush.run.place`
+- Production host: `playsush.mooo.com`; `sush.run.place` redirects to it.
 - The Nginx document root must point to Laravel's `public/` directory.
 - Production must use `APP_ENV=production` and `APP_DEBUG=false`.
 - Run `php artisan optimize` after deployment.
 - Never expose MariaDB publicly.
+- After the required checks and review pass, deploy the verified change to production by default and run a production smoke test. Do not stop at local verification unless the user explicitly asks not to deploy.
+- Commit and push the exact verified version so the production state remains reproducible from GitHub.
