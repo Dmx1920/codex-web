@@ -92,6 +92,7 @@ class ExampleTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('id="energy"', escape: false)
+            ->assertSee('<span class="energy-icon" aria-hidden="true">🥣</span>', escape: false)
             ->assertSee('id="status" role="status" aria-live="polite"', escape: false)
             ->assertSee('Миска с кормом')
             ->assertSee('миску с кормом не перепрыгивай')

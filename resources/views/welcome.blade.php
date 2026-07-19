@@ -74,6 +74,8 @@
 
         .energy-score { min-width: 170px; }
         .energy-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+        .energy-label { display: inline-flex; align-items: center; gap: 4px; }
+        .energy-icon { font-size: 1rem; line-height: 1; }
         .energy-head strong { font-size: .95rem; }
         .energy-meter {
             display: block;
@@ -253,7 +255,10 @@
             <div class="score"><span>Счёт</span><strong id="score">0</strong></div>
             <div class="score"><span>Рекорд</span><strong id="best">0</strong></div>
             <div class="score energy-score" id="energy-card">
-                <div class="energy-head"><span>Энергия</span><strong id="energy-value">100%</strong></div>
+                <div class="energy-head">
+                    <span class="energy-label"><span class="energy-icon" aria-hidden="true">🥣</span>Энергия</span>
+                    <strong id="energy-value">100%</strong>
+                </div>
                 <progress class="energy-meter" id="energy" max="100" value="100" aria-label="Энергия суща"></progress>
             </div>
         </div>
