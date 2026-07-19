@@ -37,16 +37,16 @@ class ExampleTest extends TestCase
             ->assertSee('return horizontalOverlap && state.y > 6;', escape: false)
             ->assertSee("document.addEventListener('pointerdown'", escape: false)
             ->assertSee('const obstacleTypes = [', escape: false)
-            ->assertSee('obstacleTypes.filter(type => type.lane === lane)', escape: false)
+            ->assertSee('obstacleTypes.filter(candidate => candidate.lane === lane)', escape: false)
             ->assertSee('state.speed = Math.min(520, state.speed + 14);', escape: false)
             ->assertSee('background: transparent;', escape: false)
             ->assertSee('box-shadow: none;', escape: false)
             ->assertSee('obstacle.style.fontSize = `${type.fontSize}px`;', escape: false)
-            ->assertSee("window.addEventListener('resize', () => {\n        resetObstacle();", escape: false)
+            ->assertSee("window.addEventListener('resize', () => {\n        positionObstacle();", escape: false)
             ->assertDontSee('filter: drop-shadow', escape: false);
 
         $this->assertSame(20, substr_count($response->getContent(), "{ icon: '"));
-        $this->assertSame(15, substr_count($response->getContent(), "lane: 'ground'"));
+        $this->assertSame(16, substr_count($response->getContent(), "lane: 'ground'"));
         $this->assertSame(5, substr_count($response->getContent(), "lane: 'air'"));
     }
 
@@ -82,5 +82,34 @@ class ExampleTest extends TestCase
         $this->assertNotFalse($playJumpSound);
         $this->assertGreaterThan($groundedCheck, $playJumpSound);
         $this->assertFileExists(public_path('assets/jump.ogg'));
+    }
+
+    public function test_energy_and_food_balance_match_the_game_design(): void
+    {
+        $response = $this->get('/');
+        $content = $response->getContent();
+
+        $response
+            ->assertOk()
+            ->assertSee('id="energy"', escape: false)
+            ->assertSee('id="status" role="status" aria-live="polite"', escape: false)
+            ->assertSee('Миска с кормом')
+            ->assertSee('миску с кормом не перепрыгивай')
+            ->assertSee("obstacle.dataset.kind === 'food'", escape: false)
+            ->assertSee("finish('energy');", escape: false)
+            ->assertSee('state.speed * state.energyCostPerObstacle', escape: false)
+            ->assertSee('state.energy = 100;', escape: false);
+
+        $this->assertSame(1, preg_match('/energyCostPerObstacle:\s*([\d.]+)/', $content, $energyCost));
+        $this->assertSame(1, preg_match('/foodIntervalMin:\s*(\d+)/', $content, $foodMin));
+        $this->assertSame(1, preg_match('/foodIntervalMax:\s*(\d+)/', $content, $foodMax));
+
+        $energySpentAfterThreeLongestIntervals =
+            (float) $energyCost[1] * ((int) $foodMax[1] + 1) * 3;
+        $energySpentAfterFourShortestIntervals =
+            (float) $energyCost[1] * ((int) $foodMin[1] + 1) * 4;
+
+        $this->assertLessThan(100, $energySpentAfterThreeLongestIntervals);
+        $this->assertGreaterThanOrEqual(100, $energySpentAfterFourShortestIntervals);
     }
 }
