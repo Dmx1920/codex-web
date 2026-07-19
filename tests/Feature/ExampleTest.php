@@ -112,4 +112,15 @@ class ExampleTest extends TestCase
         $this->assertLessThan(100, $energySpentAfterThreeLongestIntervals);
         $this->assertGreaterThanOrEqual(100, $energySpentAfterFourShortestIntervals);
     }
+
+    public function test_mobile_scoreboard_stays_in_one_row_below_the_title(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('.topbar { align-items: stretch; flex-direction: column; gap: 12px; }', escape: false)
+            ->assertSee('display: grid;', escape: false)
+            ->assertSee('grid-template-columns: minmax(0, .8fr) minmax(0, .95fr) minmax(118px, 1.45fr);', escape: false)
+            ->assertSee(".score {\n                min-width: 0;", escape: false)
+            ->assertSee('.energy-score { min-width: 0; }', escape: false);
+    }
 }

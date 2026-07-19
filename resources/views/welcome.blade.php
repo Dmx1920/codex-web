@@ -215,11 +215,26 @@
         @keyframes wobble { 25% { rotate: -5deg; } 75% { rotate: 5deg; } }
 
         @media (max-width: 680px) {
-            .topbar { align-items: flex-start; }
-            .scoreboard { flex-direction: column; }
-            .score { min-width: 82px; padding: 6px 10px; }
-            .energy-score { min-width: 118px; }
+            .topbar { align-items: stretch; flex-direction: column; gap: 12px; }
+            .scoreboard {
+                display: grid;
+                grid-template-columns: minmax(0, .8fr) minmax(0, .95fr) minmax(118px, 1.45fr);
+                gap: 6px;
+                width: 100%;
+            }
+            .score {
+                min-width: 0;
+                padding: 6px;
+                border-width: 2px;
+                border-radius: 14px;
+                box-shadow: 3px 3px 0 var(--ink);
+            }
+            .energy-score { min-width: 0; }
+            .score span { font-size: .62rem; }
             .score strong { font-size: 1.15rem; }
+            .energy-head { gap: 4px; }
+            .energy-head strong { font-size: .82rem; }
+            .energy-meter { height: 12px; margin-top: 4px; }
             .game-shell { min-height: 420px; }
             .creature { left: 3%; width: 145px; }
             .instructions { flex-direction: column; text-align: center; }
